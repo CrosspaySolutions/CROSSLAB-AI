@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SuperBrain v1.1 — CrossLab AI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inder&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --cp-black: #141414;
+    --cp-charcoal: #2C262B;
+    --cp-dark: #3B323A;
+    --cp-mid: #5d425a;
+    --cp-purple-light: #834779;
+    --cp-purple: #A84397;
+    --cp-magenta: #D23CB3;
+    --cp-gradient-h: linear-gradient(90deg, #A84397 0%, #D23CB3 100%);
+    --bg: #141414;
+    --surface: #1c141b;
+    --surface2: #231a22;
+    --border: #3a2a38;
+    --border-accent: rgba(168,67,151,0.35);
+    --text: #f0e8f0;
+    --text-dim: #7a5a78;
+    --text-mid: #b890b5;
+    --radius: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+  body::before { content:''; position:fixed; top:-250px; right:-250px; width:700px; height:700px; background:radial-gradient(circle, rgba(168,67,151,0.07) 0%, transparent 65%); pointer-events:none; z-index:0; }
+  body::after { content:''; position:fixed; bottom:-200px; left:-200px; width:600px; height:600px; background:radial-gradient(circle, rgba(131,71,121,0.05) 0%, transparent 65%); pointer-events:none; z-index:0; }
+
+  .brand-curves { position:fixed; top:0; left:0; right:0; bottom:0; pointer-events:none; z-index:0; overflow:hidden; }
+
+  .app { position:relative; z-index:1; max-width:920px; margin:0 auto; padding:28px 20px; }
+
+  /* ─── HEADER ──────────────────────── */
+  header { display:flex; align-items:center; justify-content:space-between; margin-bottom:32px; padding-bottom:24px; border-bottom:1px solid var(--border); }
+
+  .logo-area { display:flex; align-items:center; gap:16px; }
+
+  /* Logo CrossPay — versión negativa (fondo oscuro, texto blanco) */
+  .cp-logo { width: 180px; height: auto; flex-shrink: 0; }
+
+  .logo-divider { width:1px; height:36px; background:var(--border); }
+
+  .module-badge { display:flex; flex-direction:column; gap:3px; }
+  .module-name { font-family:'Inder',sans-serif; font-size:14px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text); }
+  .module-sub { font-size:9px; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase; }
+
+  .status-pill { display:flex; align-items:center; gap:7px; font-size:10px; color:var(--text-dim); background:var(--surface2); border:1px solid var(--border); padding:7px 14px; border-radius:20px; letter-spacing:0.05em; text-transform:uppercase; }
+  .status-dot { width:6px; height:6px; border-radius:50%; background:var(--cp-magenta); animation:pulse 2s infinite; box-shadow:0 0 6px var(--cp-magenta); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ─── API KEY GATE ────────────────── */
+  .apikey-gate { background:var(--surface); border:1px solid var(--border-accent); border-radius:var(--radius); padding:26px; margin-bottom:24px; animation:fadeIn 0.3s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+  .apikey-gate-title { font-family:'Inder',sans-serif; font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:var(--cp-magenta); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  .apikey-gate-sub { font-size:12px; color:var(--text-dim); margin-bottom:18px; line-height:1.8; }
+  .apikey-gate-sub a { color:var(--cp-purple); text-decoration:none; border-bottom:1px solid rgba(168,67,151,0.4); }
+  .apikey-row { display:flex; gap:10px; align-items:center; }
+  .apikey-input { flex:1; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); color:var(--text); font-family:'Inter',monospace; font-size:12px; padding:10px 14px; outline:none; transition:border-color 0.2s; letter-spacing:0.04em; }
+  .apikey-input:focus { border-color:var(--cp-purple); }
+  .apikey-status { font-size:11px; margin-top:10px; padding:8px 12px; border-radius:6px; display:none; letter-spacing:0.03em; }
+  .apikey-status.ok { display:block; background:rgba(168,67,151,0.1); border:1px solid rgba(168,67,151,0.3); color:var(--cp-purple); }
+  .apikey-status.err { display:block; background:rgba(210,60,100,0.1); border:1px solid rgba(210,60,100,0.3); color:#e05070; }
+  .apikey-note { font-size:11px; color:var(--text-dim); margin-top:10px; letter-spacing:0.02em; }
+
+  /* ─── TABS ────────────────────────── */
+  .tabs { display:flex; gap:4px; margin-bottom:20px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:4px; }
+  .tab { flex:1; padding:9px 12px; border:none; background:transparent; color:var(--text-dim); font-family:'Inder',sans-serif; font-size:11px; cursor:pointer; border-radius:6px; transition:all 0.2s; letter-spacing:0.08em; text-transform:uppercase; }
+  .tab.active { background:var(--surface2); color:var(--cp-magenta); border:1px solid var(--border-accent); }
+  .tab:hover:not(.active) { color:var(--text-mid); }
+
+  .panel { display:none; }
+  .panel.active { display:block; }
+
+  /* ─── INPUT BLOCK ─────────────────── */
+  .input-block { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:16px; }
+  .input-label { font-family:'Inder',sans-serif; font-size:10px; color:var(--cp-purple); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+  .input-label::after { content:''; flex:1; height:1px; background:var(--border); }
+  textarea { width:100%; min-height:130px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); color:var(--text); font-family:'Inter',sans-serif; font-size:13px; line-height:1.7; padding:14px; resize:vertical; outline:none; transition:border-color 0.2s; }
+  textarea:focus { border-color:var(--cp-purple); }
+  textarea::placeholder { color:var(--text-dim); }
+
+  /* ─── BUTTONS ─────────────────────── */
+  .btn-row { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .btn { display:flex; align-items:center; gap:8px; padding:10px 20px; border:1px solid transparent; border-radius:var(--radius); font-family:'Inder',sans-serif; font-size:11px; cursor:pointer; transition:all 0.2s; letter-spacing:0.08em; text-transform:uppercase; }
+  .btn-primary { background:var(--cp-gradient-h); color:#fff; }
+  .btn-primary:hover { opacity:0.9; transform:translateY(-1px); box-shadow:0 4px 16px rgba(168,67,151,0.35); }
+  .btn-secondary { background:transparent; color:var(--text-dim); border-color:var(--border); }
+  .btn-secondary:hover { border-color:var(--cp-mid); color:var(--text-mid); }
+  .btn-calendar { background:transparent; color:var(--cp-magenta); border-color:var(--cp-magenta); }
+  .btn-calendar:hover { background:rgba(210,60,179,0.1); transform:translateY(-1px); }
+  .btn:disabled { opacity:0.4; cursor:not-allowed; transform:none!important; }
+
+  /* ─── RESULTS ─────────────────────── */
+  .results-area { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .results-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border); background:var(--surface2); }
+  .results-title { font-family:'Inder',sans-serif; font-size:10px; color:var(--text-dim); letter-spacing:0.12em; text-transform:uppercase; }
+  .results-body { padding:16px; min-height:80px; }
+  .extraction-grid { display:grid; gap:12px; }
+  .extraction-card { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); padding:14px; transition:border-color 0.2s; }
+  .extraction-card:hover { border-color:var(--cp-mid); }
+  .card-type { font-family:'Inder',sans-serif; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+  .card-type.commitment { color:#e05070; } .card-type.decision { color:var(--cp-purple); } .card-type.person { color:var(--cp-magenta); } .card-type.risk { color:#d4a027; } .card-type.date { color:#7ab8d4; } .card-type.idea { color:var(--cp-purple-light); }
+  .card-content { font-size:13px; line-height:1.6; color:var(--text-mid); }
+  .card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+  .card-meta { font-size:10px; color:var(--text-dim); letter-spacing:0.03em; }
+  .btn-schedule-inline { display:flex; align-items:center; gap:6px; padding:5px 12px; background:transparent; border:1px solid var(--cp-magenta); border-radius:20px; color:var(--cp-magenta); font-family:'Inder',sans-serif; font-size:10px; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer; transition:all 0.2s; }
+  .btn-schedule-inline:hover { background:rgba(210,60,179,0.1); transform:translateY(-1px); }
+
+  /* ─── SCHEDULE DRAWER ─────────────── */
+  .schedule-panel { display:none; background:var(--surface2); border:1px solid var(--border-accent); border-radius:var(--radius); padding:22px; margin-top:16px; animation:fadeIn 0.2s ease; }
+  .schedule-panel.open { display:block; }
+  .schedule-title { font-family:'Inder',sans-serif; font-size:11px; color:var(--cp-magenta); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+
+  /* ─── FORMS ───────────────────────── */
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  .form-group.full { grid-column:1/-1; }
+  .form-label { font-family:'Inder',sans-serif; font-size:10px; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase; }
+  .form-input { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); color:var(--text); font-family:'Inter',sans-serif; font-size:13px; padding:9px 12px; outline:none; transition:border-color 0.2s; }
+  .form-input:focus { border-color:var(--cp-purple); }
+  select.form-input option { background:var(--bg); }
+
+  .manual-form { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; }
+  .section-label { font-family:'Inder',sans-serif; font-size:10px; color:var(--cp-purple); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:18px; display:flex; align-items:center; gap:10px; }
+  .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  /* ─── LOADING ─────────────────────── */
+  .loading-bar { display:none; height:2px; background:var(--border); border-radius:2px; overflow:hidden; margin:12px 0; }
+  .loading-bar.active { display:block; }
+  .loading-bar::after { content:''; display:block; height:100%; width:40%; background:var(--cp-gradient-h); animation:loading 1.2s infinite; }
+  @keyframes loading { 0%{transform:translateX(-250%)} 100%{transform:translateX(400%)} }
+
+  /* ─── TOAST ───────────────────────── */
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:14px 18px; font-size:12px; color:var(--text); z-index:999; transform:translateY(100px); opacity:0; transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); max-width:320px; display:flex; align-items:center; gap:10px; letter-spacing:0.02em; }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .toast.success { border-color:var(--cp-purple); }
+  .toast.error { border-color:#e05070; }
+
+  .empty-state { text-align:center; padding:36px; color:var(--text-dim); font-size:12px; line-height:2; letter-spacing:0.03em; }
+  .empty-state .big { font-size:32px; margin-bottom:8px; opacity:0.4; }
+  .scroll-results { max-height:500px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+
+  /* ─── FOOTER ──────────────────────── */
+  .brand-footer { text-align:center; margin-top:48px; padding-top:20px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:center; gap:12px; }
+  .brand-footer-text { font-family:'Inder',sans-serif; font-size:9px; color:var(--text-dim); letter-spacing:0.12em; text-transform:uppercase; }
+  .brand-footer-sep { color:var(--cp-mid); }
+  .tagline-grad { background:var(--cp-gradient-h); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+</style>
+</head>
+<body>
+
+<!-- Curvas decorativas de marca -->
+<svg class="brand-curves" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+  <path d="M-100,420 C250,180 500,620 750,380 C1000,140 1250,520 1560,310" fill="none" stroke="#A84397" stroke-width="1.2" opacity="0.25"/>
+  <path d="M-100,470 C250,230 500,670 750,430 C1000,190 1250,570 1560,360" fill="none" stroke="#A84397" stroke-width="0.7" opacity="0.15"/>
+  <path d="M1300,820 C1050,580 820,920 520,720 C220,520 80,820 -150,670" fill="none" stroke="#D23CB3" stroke-width="0.8" opacity="0.1"/>
+</svg>
+
+<div class="app">
+
+  <header>
+    <div class="logo-area">
+
+      <!-- Logo CrossPay real — PNG desde GitHub Pages -->
+      <img src="logo-crosspay.png" alt="CrossPay Solutions" style="height:42px; width:auto; filter: brightness(0) invert(1);" onerror="this.style.display='none'">
+
+      <div class="logo-divider"></div>
+
+      <div class="module-badge">
+        <div class="module-name">SuperBrain</div>
+        <div class="module-sub">CrossLab AI · v1.1</div>
+      </div>
+    </div>
+
+    <div class="status-pill">
+      <div class="status-dot"></div>
+      <span class="tagline-grad">Arquitectura Financiera</span>&nbsp;Bajo Control
+    </div>
+  </header>
+
+  <!-- API Key Gate -->
+  <div class="apikey-gate" id="apikeyGate">
+    <div class="apikey-gate-title">🔑 Configurar API Key</div>
+    <div class="apikey-gate-sub">
+      SuperBrain requiere una API Key de Anthropic para funcionar.<br>
+      La key solo vive en tu navegador — nunca se guarda ni se envía a ningún servidor externo.<br>
+      Obtén tu key en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+    </div>
+    <div class="apikey-row">
+      <input class="apikey-input" id="apikeyInput" type="password" placeholder="sk-ant-api03-...">
+      <button class="btn btn-primary" onclick="saveApiKey()">✓ Activar</button>
+      <button class="btn btn-secondary" onclick="toggleKeyVisibility()">👁</button>
+    </div>
+    <div class="apikey-status" id="apikeyStatus"></div>
+    <div class="apikey-note">🔒 Solo existe en memoria — al cerrar el navegador se borra automáticamente.</div>
+  </div>
+
+  <div class="tabs" id="mainTabs" style="display:none">
+    <button class="tab active" onclick="switchTab('analyze')">⚡ Analizar Texto</button>
+    <button class="tab" onclick="switchTab('schedule')">📅 Agendar Idea</button>
+  </div>
+
+  <!-- TAB 1: Analyze -->
+  <div id="tab-analyze" class="panel" style="display:none">
+    <div class="input-block">
+      <div class="input-label">Input — Texto, notas, correos, transcripciones</div>
+      <textarea id="analyzeInput" placeholder="Pega aquí cualquier texto: notas de reunión, correo, idea, audio transcrito...&#10;&#10;SuperBrain extraerá compromisos, decisiones, personas, riesgos, fechas e ideas agendables."></textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="analyzeText()"><span>⚡</span> Analizar</button>
+        <button class="btn btn-secondary" onclick="clearAll()"><span>✕</span> Limpiar</button>
+      </div>
+    </div>
+    <div class="loading-bar" id="analyzeLoading"></div>
+    <div class="results-area" id="analyzeResults" style="display:none">
+      <div class="results-header">
+        <span class="results-title">Extracción Inteligente</span>
+        <span class="results-title" id="resultCount" style="color:var(--cp-magenta)"></span>
+      </div>
+      <div class="results-body scroll-results" id="resultsBody">
+        <div class="empty-state"><div class="big">◎</div>Esperando análisis...</div>
+      </div>
+    </div>
+
+    <!-- Drawer -->
+    <div class="schedule-panel" id="scheduleDrawer">
+      <div class="schedule-title">📅 Agendar idea detectada</div>
+      <div class="form-grid">
+        <div class="form-group full"><div class="form-label">Título del evento</div><input class="form-input" id="drawerTitle" type="text"></div>
+        <div class="form-group full"><div class="form-label">Descripción</div><input class="form-input" id="drawerDesc" type="text" placeholder="Contexto adicional..."></div>
+        <div class="form-group"><div class="form-label">Fecha</div><input class="form-input" id="drawerDate" type="date"></div>
+        <div class="form-group"><div class="form-label">Hora inicio</div><input class="form-input" id="drawerTime" type="time" value="10:00"></div>
+        <div class="form-group"><div class="form-label">Duración</div>
+          <select class="form-input" id="drawerDuration"><option value="30">30 min</option><option value="60" selected>1 hora</option><option value="90">1.5 horas</option><option value="120">2 horas</option></select>
+        </div>
+        <div class="form-group"><div class="form-label">Invitado (opcional)</div><input class="form-input" id="drawerAttendee" type="email" placeholder="correo@ejemplo.com"></div>
+        <div class="form-group"><div class="form-label">Google Meet</div>
+          <select class="form-input" id="drawerMeet"><option value="no">Sin Meet</option><option value="yes">Con Google Meet</option></select>
+        </div>
+        <div class="form-group"><div class="form-label">Color</div>
+          <select class="form-input" id="drawerColor"><option value="3">🟣 Grape</option><option value="1">💜 Lavender</option><option value="9">🔵 Blueberry</option><option value="6">🟠 Tangerine</option><option value="11">🔴 Tomato</option></select>
+        </div>
+      </div>
+      <div class="loading-bar" id="drawerLoading"></div>
+      <div class="btn-row">
+        <button class="btn btn-calendar" onclick="scheduleFromDrawer()">📅 Confirmar y Agendar</button>
+        <button class="btn btn-secondary" onclick="closeDrawer()">✕ Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: Manual -->
+  <div id="tab-schedule" class="panel" style="display:none">
+    <div class="manual-form">
+      <div class="section-label">📅 Crear evento en Google Calendar</div>
+      <div class="form-grid">
+        <div class="form-group full"><div class="form-label">Título / Idea</div><input class="form-input" id="manualTitle" type="text" placeholder="ej. Revisar propuesta NMI con Edison"></div>
+        <div class="form-group full"><div class="form-label">Descripción (opcional)</div><input class="form-input" id="manualDesc" type="text" placeholder="Contexto adicional..."></div>
+        <div class="form-group"><div class="form-label">Fecha</div><input class="form-input" id="manualDate" type="date"></div>
+        <div class="form-group"><div class="form-label">Hora inicio</div><input class="form-input" id="manualTime" type="time" value="10:00"></div>
+        <div class="form-group"><div class="form-label">Duración</div>
+          <select class="form-input" id="manualDuration"><option value="30">30 min</option><option value="60" selected>1 hora</option><option value="90">1.5 horas</option><option value="120">2 horas</option></select>
+        </div>
+        <div class="form-group"><div class="form-label">Invitado (opcional)</div><input class="form-input" id="manualAttendee" type="email" placeholder="correo@ejemplo.com"></div>
+        <div class="form-group"><div class="form-label">Google Meet</div>
+          <select class="form-input" id="manualMeet"><option value="no">Sin Meet</option><option value="yes">Con Google Meet</option></select>
+        </div>
+        <div class="form-group"><div class="form-label">Color</div>
+          <select class="form-input" id="manualColor"><option value="3">🟣 Grape</option><option value="1">💜 Lavender</option><option value="9">🔵 Blueberry</option><option value="6">🟠 Tangerine</option><option value="11">🔴 Tomato</option></select>
+        </div>
+      </div>
+      <div class="loading-bar" id="manualLoading"></div>
+      <div class="btn-row">
+        <button class="btn btn-calendar" onclick="scheduleManual()">📅 Agendar en Calendario</button>
+        <button class="btn btn-secondary" onclick="clearManual()">✕ Limpiar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="brand-footer">
+    <span class="brand-footer-text">CrossPay Solutions SAS</span>
+    <span class="brand-footer-sep">·</span>
+    <span class="brand-footer-text">CrossLab AI</span>
+    <span class="brand-footer-sep">·</span>
+    <span class="brand-footer-text tagline-grad">Arquitectura Financiera Bajo Control</span>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"><span id="toastIcon"></span><span id="toastMsg"></span></div>
+
+<script>
+let extractedItems=[], activeDrawerItem=null, ANTHROPIC_API_KEY='';
+
+function saveApiKey(){
+  const key=document.getElementById('apikeyInput').value.trim();
+  const status=document.getElementById('apikeyStatus');
+  if(!key.startsWith('sk-ant-')){ status.className='apikey-status err'; status.textContent='✕ Formato inválido — debe comenzar con sk-ant-'; return; }
+  ANTHROPIC_API_KEY=key;
+  status.className='apikey-status ok';
+  status.textContent='✓ API Key activada — SuperBrain operativo';
+  setTimeout(()=>{
+    document.getElementById('apikeyGate').style.display='none';
+    document.getElementById('mainTabs').style.display='flex';
+    const p=document.getElementById('tab-analyze');
+    p.style.display='block'; p.classList.add('active');
+  },800);
+}
+
+function toggleKeyVisibility(){ const i=document.getElementById('apikeyInput'); i.type=i.type==='password'?'text':'password'; }
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('apikeyInput').addEventListener('keydown',e=>{ if(e.key==='Enter') saveApiKey(); });
+  const t=new Date(); t.setDate(t.getDate()+1);
+  document.getElementById('manualDate').value=t.toISOString().split('T')[0];
+});
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>{p.classList.remove('active');p.style.display='none';});
+  event.target.classList.add('active');
+  const p=document.getElementById('tab-'+tab);
+  p.style.display='block'; p.classList.add('active');
+  closeDrawer();
+}
+
+async function analyzeText(){
+  const input=document.getElementById('analyzeInput').value.trim();
+  if(!input) return showToast('Escribe o pega texto primero','error');
+  const loading=document.getElementById('analyzeLoading');
+  loading.classList.add('active');
+  document.getElementById('analyzeResults').style.display='none';
+  closeDrawer();
+  const today=new Date().toISOString().split('T')[0];
+  const sys=`Eres el motor de análisis de SuperBrain para Daniel Fonnegra, C-Level de CrossPay Solutions SAS — Concierge Financiero Corporativo. Arquitectura financiera bajo control.
+Extrae TODOS los elementos relevantes del texto. Responde SOLO con JSON puro sin markdown ni backticks.
+Formato: {"items":[{"type":"commitment|decision|person|risk|date|idea","content":"...","meta":"...","schedulable":true/false,"suggestedTitle":"...","suggestedDescription":"..."}]}
+Tipos: commitment=compromisos, decision=decisiones, person=personas con contexto, risk=riesgos/alertas, date=fechas/deadlines, idea=ideas/propuestas (schedulable:true si requieren reunión o seguimiento).
+Hoy: ${today} · Bogotá. Sé exhaustivo.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:[{role:'user',content:input}]})
+    });
+    const data=await res.json();
+    const raw=data.content?.[0]?.text||'{}';
+    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    extractedItems=parsed.items||[];
+    renderResults();
+  } catch(e){ showToast('Error al analizar. Verifica tu API Key.','error'); console.error(e); }
+  finally{ loading.classList.remove('active'); }
+}
+
+function renderResults(){
+  const container=document.getElementById('resultsBody');
+  const count=document.getElementById('resultCount');
+  document.getElementById('analyzeResults').style.display='block';
+  if(!extractedItems.length){ container.innerHTML='<div class="empty-state"><div class="big">◎</div>No se encontraron elementos relevantes.</div>'; count.textContent=''; return; }
+  count.textContent=`${extractedItems.length} elemento${extractedItems.length!==1?'s':''}`;
+  const cfg={commitment:{label:'Compromiso',icon:'●',cls:'commitment'},decision:{label:'Decisión',icon:'◆',cls:'decision'},person:{label:'Persona',icon:'◉',cls:'person'},risk:{label:'Riesgo',icon:'▲',cls:'risk'},date:{label:'Fecha',icon:'◷',cls:'date'},idea:{label:'Idea',icon:'◈',cls:'idea'}};
+  container.innerHTML=`<div class="extraction-grid">${extractedItems.map((item,i)=>{
+    const c=cfg[item.type]||{label:item.type,icon:'•',cls:'person'};
+    return `<div class="extraction-card"><div class="card-type ${c.cls}">${c.icon} ${c.label.toUpperCase()}</div><div class="card-content">${escapeHtml(item.content)}</div><div class="card-footer"><span class="card-meta">${escapeHtml(item.meta||'')}</span>${item.schedulable?`<button class="btn-schedule-inline" onclick="openDrawer(${i})">📅 Agendar</button>`:''}</div></div>`;
+  }).join('')}</div>`;
+}
+
+function openDrawer(i){
+  const item=extractedItems[i]; activeDrawerItem=item;
+  document.getElementById('drawerTitle').value=item.suggestedTitle||item.content.slice(0,60);
+  document.getElementById('drawerDesc').value=item.suggestedDescription||'';
+  const t=new Date(); t.setDate(t.getDate()+1);
+  document.getElementById('drawerDate').value=t.toISOString().split('T')[0];
+  document.getElementById('drawerTime').value='10:00';
+  const drawer=document.getElementById('scheduleDrawer');
+  drawer.classList.add('open');
+  setTimeout(()=>drawer.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+}
+function closeDrawer(){ document.getElementById('scheduleDrawer').classList.remove('open'); activeDrawerItem=null; }
+
+async function scheduleFromDrawer(){
+  await createCalendarEvent({title:document.getElementById('drawerTitle').value,desc:document.getElementById('drawerDesc').value,date:document.getElementById('drawerDate').value,time:document.getElementById('drawerTime').value,duration:parseInt(document.getElementById('drawerDuration').value),attendee:document.getElementById('drawerAttendee').value,meet:document.getElementById('drawerMeet').value==='yes',color:document.getElementById('drawerColor').value,loadingId:'drawerLoading'});
+}
+async function scheduleManual(){
+  await createCalendarEvent({title:document.getElementById('manualTitle').value,desc:document.getElementById('manualDesc').value,date:document.getElementById('manualDate').value,time:document.getElementById('manualTime').value,duration:parseInt(document.getElementById('manualDuration').value),attendee:document.getElementById('manualAttendee').value,meet:document.getElementById('manualMeet').value==='yes',color:document.getElementById('manualColor').value,loadingId:'manualLoading'});
+}
+
+async function createCalendarEvent({title,desc,date,time,duration,attendee,meet,color,loadingId}){
+  if(!title.trim()) return showToast('El título es obligatorio','error');
+  if(!date) return showToast('Selecciona una fecha','error');
+  const loading=document.getElementById(loadingId);
+  loading.classList.add('active');
+  const [h,m]=time.split(':').map(Number);
+  const startDt=`${date}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`;
+  const endDate=new Date(`${date}T${startDt.split('T')[1]}`);
+  endDate.setMinutes(endDate.getMinutes()+duration);
+  const endDt=`${date}T${String(endDate.getHours()).padStart(2,'0')}:${String(endDate.getMinutes()).padStart(2,'0')}:00`;
+  const attendees=[{email:'management@crosspaysolutions.com',organizer:true}];
+  if(attendee.trim()) attendees.push({email:attendee.trim()});
+  const eventObj={summary:title.trim(),description:desc.trim()||`Agendado desde SuperBrain — CrossLab AI\nCrossPay Solutions SAS · Concierge Financiero Corporativo`,start:{dateTime:startDt,timeZone:'America/Bogota'},end:{dateTime:endDt,timeZone:'America/Bogota'},attendees,colorId:color,reminders:{useDefault:false,overrides:[{method:'popup',minutes:10}]}};
+  if(meet) eventObj.conferenceData={createRequest:{requestId:`sb-${Date.now()}`,conferenceSolutionKey:{type:'hangoutsMeet'}}};
+  const prompt=`Crea este evento en Google Calendar usando gcal_create_event con calendarId="primary" y sendUpdates="all". Datos: ${JSON.stringify(eventObj)} Responde SOLO: "EVENTO_CREADO" si fue exitoso, o "ERROR: [motivo]" si falló.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,mcp_servers:[{type:'url',url:'https://gcal.mcp.claude.com/mcp',name:'google-calendar'}],messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    const txt=data.content?.filter(b=>b.type==='text')?.map(b=>b.text)?.join(' ')||'';
+    if(txt.includes('EVENTO_CREADO')||txt.toLowerCase().includes('creado')||txt.toLowerCase().includes('created')){
+      showToast(`✓ "${title.trim()}" agendado — ${date} a las ${time}`,'success');
+      closeDrawer();
+      if(loadingId==='manualLoading') clearManual();
+    } else { showToast('No se pudo crear el evento. Verifica los datos.','error'); }
+  } catch(e){ showToast('Error de conexión con Calendar','error'); console.error(e); }
+  finally{ loading.classList.remove('active'); }
+}
+
+function clearAll(){ document.getElementById('analyzeInput').value=''; document.getElementById('analyzeResults').style.display='none'; extractedItems=[]; closeDrawer(); }
+function clearManual(){ ['manualTitle','manualDesc','manualAttendee'].forEach(id=>document.getElementById(id).value=''); const t=new Date(); t.setDate(t.getDate()+1); document.getElementById('manualDate').value=t.toISOString().split('T')[0]; document.getElementById('manualTime').value='10:00'; }
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+let toastTimer;
+function showToast(msg,type='success'){ const t=document.getElementById('toast'); document.getElementById('toastIcon').textContent=type==='success'?'✓':'✕'; document.getElementById('toastMsg').textContent=msg; t.className=`toast ${type} show`; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),3500); }
+</script>
+</body>
+</html>
