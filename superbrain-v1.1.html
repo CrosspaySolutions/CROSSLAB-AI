@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SuperBrain v1.1 — CrossLab AI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #4fffb0;
+    --accent2: #7b61ff;
+    --accent3: #ff6b6b;
+    --warn: #ffb347;
+    --text: #e8e8f0;
+    --text-dim: #6b6b8a;
+    --text-mid: #a0a0b8;
+    --radius: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,255,176,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,255,176,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  .logo-version {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 20px;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+
+  .tab.active {
+    background: var(--surface2);
+    color: var(--accent);
+    border: 1px solid var(--border);
+  }
+
+  .tab:hover:not(.active) { color: var(--text-mid); }
+
+  /* Panels */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Input area */
+  .input-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .input-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .input-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 120px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus { border-color: var(--accent2); }
+  textarea::placeholder { color: var(--text-dim); }
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0a0a0f;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: #3de89e; transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-mid);
+    border-color: var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .btn-calendar {
+    background: transparent;
+    color: var(--warn);
+    border-color: var(--warn);
+  }
+  .btn-calendar:hover { background: rgba(255,179,71,0.1); transform: translateY(-1px); }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  /* Results area */
+  .results-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .results-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .results-body {
+    padding: 16px;
+    min-height: 80px;
+  }
+
+  /* Extraction cards */
+  .extraction-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .extraction-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    transition: border-color 0.2s;
+  }
+
+  .extraction-card:hover { border-color: var(--border); }
+
+  .card-type {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-type.commitment { color: var(--accent3); }
+  .card-type.decision { color: var(--accent2); }
+  .card-type.person { color: var(--accent); }
+  .card-type.risk { color: var(--warn); }
+  .card-type.date { color: #60b8ff; }
+  .card-type.idea { color: #c084fc; }
+
+  .card-content {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-mid);
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  .card-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  .btn-schedule-inline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: transparent;
+    border: 1px solid var(--warn);
+    border-radius: 20px;
+    color: var(--warn);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-schedule-inline:hover {
+    background: rgba(255,179,71,0.12);
+    transform: translateY(-1px);
+  }
+
+  /* Quick Schedule Panel */
+  .schedule-panel {
+    display: none;
+    background: var(--surface2);
+    border: 1px solid var(--warn);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-top: 16px;
+    animation: slideIn 0.2s ease;
+  }
+
+  .schedule-panel.open { display: block; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .schedule-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--warn);
+    letter-spacing: 0.06em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group.full { grid-column: 1 / -1; }
+
+  .form-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .form-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus { border-color: var(--warn); }
+
+  select.form-input option { background: var(--bg); }
+
+  /* Loading state */
+  .loading-bar {
+    display: none;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 12px 0;
+  }
+
+  .loading-bar.active { display: block; }
+
+  .loading-bar::after {
+    content: '';
+    display: block;
+    height: 100%;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: loading 1.2s infinite;
+  }
+
+  @keyframes loading {
+    0% { transform: translateX(-250%); }
+    100% { transform: translateX(400%); }
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    z-index: 999;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 320px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--accent); }
+  .toast.error { border-color: var(--accent3); }
+  .toast-icon { font-size: 16px; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 32px;
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    line-height: 2;
+  }
+
+  .empty-state .big { font-size: 28px; margin-bottom: 8px; }
+
+  /* Manual schedule tab */
+  .manual-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Scrollable results */
+  .scroll-results {
+    max-height: 500px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  /* Chip tags */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .chip-meet { background: rgba(96,184,255,0.15); color: #60b8ff; border: 1px solid rgba(96,184,255,0.3); }
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🧠</div>
+      <div>
+        <div class="logo-text">SUPERBRAIN</div>
+      </div>
+      <div class="logo-version">v1.1</div>
+    </div>
+    <div class="status-pill">
+      <div class="status-dot"></div>
+      CrossLab AI — Daniel Fonnegra
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('analyze')">⚡ Analizar Texto</button>
+    <button class="tab" onclick="switchTab('schedule')">📅 Agendar Idea</button>
+  </div>
+
+  <!-- TAB 1: Analyze -->
+  <div id="tab-analyze" class="panel active">
+    <div class="input-block">
+      <div class="input-label">Input — Texto, notas, correos, transcripciones</div>
+      <textarea id="analyzeInput" placeholder="Pega aquí cualquier texto: notas de reunión, correo, idea, audio transcrito...&#10;&#10;SuperBrain extraerá compromisos, decisiones, personas, riesgos, fechas e ideas agendables."></textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="analyzeText()">
+          <span>⚡</span> Analizar
+        </button>
+        <button class="btn btn-secondary" onclick="clearAll()">
+          <span>✕</span> Limpiar
+        </button>
+      </div>
+    </div>
+
+    <div class="loading-bar" id="analyzeLoading"></div>
+
+    <div class="results-area" id="analyzeResults" style="display:none">
+      <div class="results-header">
+        <span class="results-title">Extracción Inteligente</span>
+        <span class="results-title" id="resultCount" style="color:var(--accent)"></span>
+      </div>
+      <div class="results-body scroll-results" id="resultsBody">
+        <div class="empty-state">
+          <div class="big">🔍</div>
+          Esperando análisis...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: Manual Schedule -->
+  <div id="tab-schedule" class="panel">
+    <div class="manual-form">
+      <div class="section-label">📅 Crear evento en Google Calendar</div>
+
+      <div class="form-grid">
+        <div class="form-group full">
+          <div class="form-label">Título / Idea</div>
+          <input class="form-input" id="manualTitle" type="text" placeholder="ej. Revisar propuesta NMI con Edison">
+        </div>
+        <div class="form-group full">
+          <div class="form-label">Descripción (opcional)</div>
+          <input class="form-input" id="manualDesc" type="text" placeholder="Contexto adicional...">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Fecha</div>
+          <input class="form-input" id="manualDate" type="date">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Hora inicio</div>
+          <input class="form-input" id="manualTime" type="time" value="10:00">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Duración</div>
+          <select class="form-input" id="manualDuration">
+            <option value="30">30 minutos</option>
+            <option value="60" selected>1 hora</option>
+            <option value="90">1.5 horas</option>
+            <option value="120">2 horas</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Invitado (opcional)</div>
+          <input class="form-input" id="manualAttendee" type="email" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Google Meet</div>
+          <select class="form-input" id="manualMeet">
+            <option value="no">Sin Meet</option>
+            <option value="yes">Agregar Google Meet</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Color</div>
+          <select class="form-input" id="manualColor">
+            <option value="9">🔵 Blueberry</option>
+            <option value="6">🟠 Tangerine</option>
+            <option value="10">🟢 Basil</option>
+            <option value="11">🔴 Tomato</option>
+            <option value="5">🟡 Banana</option>
+            <option value="1">💜 Lavender</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="loading-bar" id="manualLoading"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-calendar" onclick="scheduleManual()">
+          <span>📅</span> Agendar en Calendario
+        </button>
+        <button class="btn btn-secondary" onclick="clearManual()">
+          <span>✕</span> Limpiar
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Quick Schedule Drawer (used by auto-detect) -->
+<div class="schedule-panel" id="scheduleDrawer">
+  <div class="schedule-title">📅 Agendar idea detectada</div>
+  <div class="form-grid">
+    <div class="form-group full">
+      <div class="form-label">Título del evento</div>
+      <input class="form-input" id="drawerTitle" type="text">
+    </div>
+    <div class="form-group full">
+      <div class="form-label">Descripción</div>
+      <input class="form-input" id="drawerDesc" type="text" placeholder="Contexto adicional...">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Fecha</div>
+      <input class="form-input" id="drawerDate" type="date">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Hora inicio</div>
+      <input class="form-input" id="drawerTime" type="time" value="10:00">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Duración</div>
+      <select class="form-input" id="drawerDuration">
+        <option value="30">30 minutos</option>
+        <option value="60" selected>1 hora</option>
+        <option value="90">1.5 horas</option>
+        <option value="120">2 horas</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Invitado (opcional)</div>
+      <input class="form-input" id="drawerAttendee" type="email" placeholder="correo@ejemplo.com">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Google Meet</div>
+      <select class="form-input" id="drawerMeet">
+        <option value="no">Sin Meet</option>
+        <option value="yes">Agregar Google Meet</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Color</div>
+      <select class="form-input" id="drawerColor">
+        <option value="9">🔵 Blueberry</option>
+        <option value="6">🟠 Tangerine</option>
+        <option value="10">🟢 Basil</option>
+        <option value="11">🔴 Tomato</option>
+        <option value="5">🟡 Banana</option>
+      </select>
+    </div>
+  </div>
+  <div class="loading-bar" id="drawerLoading"></div>
+  <div class="btn-row">
+    <button class="btn btn-calendar" onclick="scheduleFromDrawer()">📅 Confirmar y Agendar</button>
+    <button class="btn btn-secondary" onclick="closeDrawer()">✕ Cancelar</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon"></span>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+// ─── State ─────────────────────────────────────────────────────────────────
+let extractedItems = [];
+let activeDrawerItem = null;
+
+// ─── Tab switching ──────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  closeDrawer();
+}
+
+// ─── Analyze ────────────────────────────────────────────────────────────────
+async function analyzeText() {
+  const input = document.getElementById('analyzeInput').value.trim();
+  if (!input) return showToast('Escribe o pega texto primero', 'error');
+
+  const loading = document.getElementById('analyzeLoading');
+  loading.classList.add('active');
+  document.getElementById('analyzeResults').style.display = 'none';
+  closeDrawer();
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const systemPrompt = `Eres el motor de análisis de SuperBrain para Daniel Fonnegra, fundador C-Level de CrossPay Solutions SAS.
+Extrae del texto TODOS los elementos relevantes y responde SOLO con JSON puro (sin markdown, sin backticks).
+
+Formato exacto:
+{
+  "items": [
+    {
+      "type": "commitment|decision|person|risk|date|idea",
+      "content": "descripción clara y concisa",
+      "meta": "persona involucrada, fecha, o contexto breve",
+      "schedulable": true/false,
+      "suggestedTitle": "título corto para el evento si schedulable=true",
+      "suggestedDescription": "descripción corta del evento si schedulable=true"
+    }
+  ]
+}
+
+Tipos:
+- commitment: compromisos explícitos o implícitos (de Daniel o de otros)
+- decision: decisiones tomadas
+- person: personas mencionadas con contexto
+- risk: riesgos, alertas, problemas potenciales
+- date: fechas, deadlines, plazos
+- idea: ideas, propuestas, iniciativas — SIEMPRE marcar schedulable:true si requieren seguimiento o reunión
+
+Fecha de hoy: ${today}
+Zona horaria: America/Bogota
+
+Regla: Si un item es una idea, propuesta, o requiere una reunión/acción futura, marcarlo schedulable:true.
+Sé exhaustivo — extrae TODOS los items relevantes, no solo los obvios.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: input }]
+      })
+    });
+
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || '{}';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    extractedItems = parsed.items || [];
+    renderResults();
+  } catch (e) {
+    showToast('Error al analizar. Intenta de nuevo.', 'error');
+    console.error(e);
+  } finally {
+    loading.classList.remove('active');
+  }
+}
+
+// ─── Render results ─────────────────────────────────────────────────────────
+function renderResults() {
+  const container = document.getElementById('resultsBody');
+  const count = document.getElementById('resultCount');
+  const resultsArea = document.getElementById('analyzeResults');
+
+  resultsArea.style.display = 'block';
+
+  if (!extractedItems.length) {
+    container.innerHTML = '<div class="empty-state"><div class="big">🔍</div>No se encontraron elementos relevantes.</div>';
+    count.textContent = '';
+    return;
+  }
+
+  count.textContent = `${extractedItems.length} elemento${extractedItems.length !== 1 ? 's' : ''}`;
+
+  const typeConfig = {
+    commitment: { label: 'Compromiso', icon: '🔴', cls: 'commitment' },
+    decision:   { label: 'Decisión',   icon: '🟣', cls: 'decision' },
+    person:     { label: 'Persona',    icon: '🟢', cls: 'person' },
+    risk:       { label: 'Riesgo',     icon: '🟡', cls: 'risk' },
+    date:       { label: 'Fecha',      icon: '🔵', cls: 'date' },
+    idea:       { label: 'Idea',       icon: '💡', cls: 'idea' }
+  };
+
+  const html = extractedItems.map((item, i) => {
+    const cfg = typeConfig[item.type] || { label: item.type, icon: '•', cls: 'person' };
+    return `
+      <div class="extraction-card" id="card-${i}">
+        <div class="card-type ${cfg.cls}">${cfg.icon} ${cfg.label.toUpperCase()}</div>
+        <div class="card-content">${escapeHtml(item.content)}</div>
+        <div class="card-footer">
+          <span class="card-meta">${escapeHtml(item.meta || '')}</span>
+          ${item.schedulable ? `
+            <button class="btn-schedule-inline" onclick="openDrawer(${i})">
+              📅 Agendar
+            </button>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = `<div class="extraction-grid">${html}</div>`;
+}
+
+// ─── Drawer (auto-detected) ─────────────────────────────────────────────────
+function openDrawer(index) {
+  const item = extractedItems[index];
+  activeDrawerItem = item;
+
+  document.getElementById('drawerTitle').value = item.suggestedTitle || item.content.slice(0, 60);
+  document.getElementById('drawerDesc').value = item.suggestedDescription || '';
+
+  // Default to tomorrow
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  document.getElementById('drawerDate').value = tomorrow.toISOString().split('T')[0];
+  document.getElementById('drawerTime').value = '10:00';
+
+  const drawer = document.getElementById('scheduleDrawer');
+  drawer.classList.add('open');
+
+  // Scroll to drawer
+  setTimeout(() => drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+}
+
+function closeDrawer() {
+  document.getElementById('scheduleDrawer').classList.remove('open');
+  activeDrawerItem = null;
+}
+
+async function scheduleFromDrawer() {
+  await createCalendarEvent({
+    title:    document.getElementById('drawerTitle').value,
+    desc:     document.getElementById('drawerDesc').value,
+    date:     document.getElementById('drawerDate').value,
+    time:     document.getElementById('drawerTime').value,
+    duration: parseInt(document.getElementById('drawerDuration').value),
+    attendee: document.getElementById('drawerAttendee').value,
+    meet:     document.getElementById('drawerMeet').value === 'yes',
+    color:    document.getElementById('drawerColor').value,
+    loadingId: 'drawerLoading'
+  });
+}
+
+// ─── Manual schedule ─────────────────────────────────────────────────────────
+async function scheduleManual() {
+  await createCalendarEvent({
+    title:    document.getElementById('manualTitle').value,
+    desc:     document.getElementById('manualDesc').value,
+    date:     document.getElementById('manualDate').value,
+    time:     document.getElementById('manualTime').value,
+    duration: parseInt(document.getElementById('manualDuration').value),
+    attendee: document.getElementById('manualAttendee').value,
+    meet:     document.getElementById('manualMeet').value === 'yes',
+    color:    document.getElementById('manualColor').value,
+    loadingId: 'manualLoading'
+  });
+}
+
+// ─── Core: Create calendar event via Claude + MCP ──────────────────────────
+async function createCalendarEvent({ title, desc, date, time, duration, attendee, meet, color, loadingId }) {
+  if (!title.trim()) return showToast('El título es obligatorio', 'error');
+  if (!date) return showToast('Selecciona una fecha', 'error');
+
+  const loading = document.getElementById(loadingId);
+  loading.classList.add('active');
+
+  // Build datetime strings
+  const [h, m] = time.split(':').map(Number);
+  const startDt = `${date}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`;
+  const endDate = new Date(`${date}T${startDt.split('T')[1]}`);
+  endDate.setMinutes(endDate.getMinutes() + duration);
+  const endDt = `${date}T${String(endDate.getHours()).padStart(2,'0')}:${String(endDate.getMinutes()).padStart(2,'0')}:00`;
+
+  const attendees = [{ email: 'management@crosspaysolutions.com', organizer: true }];
+  if (attendee.trim()) attendees.push({ email: attendee.trim() });
+
+  const eventObj = {
+    summary: title.trim(),
+    description: desc.trim() || `Agendado desde SuperBrain — CrossLab AI\n\nProyecto: CrossPay Solutions SAS`,
+    start: { dateTime: startDt, timeZone: 'America/Bogota' },
+    end:   { dateTime: endDt,   timeZone: 'America/Bogota' },
+    attendees,
+    colorId: color,
+    reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 10 }] }
+  };
+
+  if (meet) {
+    eventObj.conferenceData = {
+      createRequest: {
+        requestId: `superbrain-${Date.now()}`,
+        conferenceSolutionKey: { type: 'hangoutsMeet' }
+      }
+    };
+  }
+
+  const prompt = `Crea este evento en Google Calendar usando gcal_create_event con calendarId="primary" y sendUpdates="all".
+Datos del evento: ${JSON.stringify(eventObj)}
+Responde solo con: "EVENTO_CREADO" si fue exitoso, o "ERROR: [motivo]" si falló.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        mcp_servers: [{
+          type: 'url',
+          url: 'https://gcal.mcp.claude.com/mcp',
+          name: 'google-calendar'
+        }],
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const responseText = data.content
+      ?.filter(b => b.type === 'text')
+      ?.map(b => b.text)
+      ?.join(' ') || '';
+
+    if (responseText.includes('EVENTO_CREADO') || responseText.toLowerCase().includes('creado') || responseText.toLowerCase().includes('created')) {
+      showToast(`✅ "${title.trim()}" agendado para ${date} a las ${time}`, 'success');
+      closeDrawer();
+      if (loadingId === 'manualLoading') clearManual();
+    } else {
+      showToast('No se pudo crear el evento. Verifica los datos.', 'error');
+      console.error('Calendar response:', responseText);
+    }
+  } catch (e) {
+    showToast('Error de conexión con Calendar', 'error');
+    console.error(e);
+  } finally {
+    loading.classList.remove('active');
+  }
+}
+
+// ─── Utilities ───────────────────────────────────────────────────────────────
+function clearAll() {
+  document.getElementById('analyzeInput').value = '';
+  document.getElementById('analyzeResults').style.display = 'none';
+  extractedItems = [];
+  closeDrawer();
+}
+
+function clearManual() {
+  document.getElementById('manualTitle').value = '';
+  document.getElementById('manualDesc').value = '';
+  document.getElementById('manualDate').value = '';
+  document.getElementById('manualTime').value = '10:00';
+  document.getElementById('manualAttendee').value = '';
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let toastTimer;
+function showToast(msg, type = 'success') {
+  const toast = document.getElementById('toast');
+  const icon = document.getElementById('toastIcon');
+  const text = document.getElementById('toastMsg');
+
+  icon.textContent = type === 'success' ? '✓' : '✕';
+  text.textContent = msg;
+  toast.className = `toast ${type} show`;
+
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3500);
+}
+
+// Set default date to tomorrow for manual form
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+document.getElementById('manualDate').value = tomorrow.toISOString().split('T')[0];
+</script>
+</body>
+</html>
