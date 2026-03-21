@@ -1,1 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SuperBrain v1.1 — CrossLab AI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inder&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --cp-black: #141414;
+    --cp-charcoal: #2C262B;
+    --cp-dark: #3B323A;
+    --cp-mid: #5d425a;
+    --cp-purple-light: #834779;
+    --cp-purple: #A84397;
+    --cp-magenta: #D23CB3;
+    --cp-gradient-h: linear-gradient(90deg, #A84397 0%, #D23CB3 100%);
+    --bg: #141414;
+    --surface: #1c141b;
+    --surface2: #231a22;
+    --border: #3a2a38;
+    --border-accent: rgba(168,67,151,0.35);
+    --text: #f0e8f0;
+    --text-dim: #7a5a78;
+    --text-mid: #b890b5;
+    --radius: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+  body::before { content:''; position:fixed; top:-250px; right:-250px; width:700px; height:700px; background:radial-gradient(circle, rgba(168,67,151,0.07) 0%, transparent 65%); pointer-events:none; z-index:0; }
+  body::after { content:''; position:fixed; bottom:-200px; left:-200px; width:600px; height:600px; background:radial-gradient(circle, rgba(131,71,121,0.05) 0%, transparent 65%); pointer-events:none; z-index:0; }
+
+  .brand-curves { position:fixed; top:0; left:0; right:0; bottom:0; pointer-events:none; z-index:0; overflow:hidden; }
 
