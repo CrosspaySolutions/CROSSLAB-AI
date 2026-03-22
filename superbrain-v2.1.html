@@ -185,6 +185,37 @@ textarea::placeholder{color:var(--text3);}
 .wvfm{display:flex;align-items:center;gap:2px;height:24px;}
 .wb{width:2px;border-radius:1px;background:var(--accent);transition:height 0.1s ease;}
 
+.meeting-recorder{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;}
+.mr-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.mr-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--accent);letter-spacing:2px;}
+.mr-lang-toggle{display:flex;gap:3px;background:var(--surface2);padding:2px;border-radius:8px;border:1px solid var(--border);}
+.lang-btn{padding:4px 10px;border-radius:6px;font-size:9px;cursor:pointer;color:var(--text2);border:none;background:none;font-family:'JetBrains Mono',monospace;letter-spacing:1px;transition:all 0.2s;}
+.lang-btn.active{background:var(--surface);color:var(--accent);border:1px solid rgba(168,85,247,0.2);}
+.mr-status-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.mr-time{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;letter-spacing:3px;color:var(--text);min-width:60px;}
+.mr-status{flex:1;font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;}
+.rec-btn-full{width:100%;padding:14px;border-radius:10px;border:none;cursor:pointer;background:var(--gradient);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;letter-spacing:1px;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.3s;box-shadow:0 4px 20px rgba(168,85,247,0.3);}
+.rec-btn-full:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(168,85,247,0.5);}
+.rec-btn-full.recording{background:linear-gradient(135deg,#ef4444,#dc2626);animation:rPulse 1.5s infinite;box-shadow:0 4px 20px rgba(239,68,68,0.4);}
+@keyframes rPulse{0%,100%{box-shadow:0 4px 20px rgba(239,68,68,0.4)}50%{box-shadow:0 8px 40px rgba(239,68,68,0.7)}}
+.live-transcript{background:var(--surface);border:1px solid rgba(168,85,247,0.2);border-radius:12px;margin-bottom:14px;overflow:hidden;}
+.lt-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.lt-title{font-size:10px;color:var(--accent);letter-spacing:2px;font-weight:700;}
+.lt-langs{display:flex;gap:5px;}
+.lt-lang-tag{font-size:8px;padding:2px 7px;border-radius:8px;}
+.lt-lang-es{background:rgba(16,185,129,0.1);color:var(--accent3);border:1px solid rgba(16,185,129,0.2);}
+.lt-lang-en{background:rgba(59,130,246,0.1);color:var(--info);border:1px solid rgba(59,130,246,0.2);}
+.lt-body{padding:12px 14px;max-height:200px;overflow-y:auto;font-size:11px;line-height:1.8;color:var(--text2);}
+.lt-segment{margin-bottom:6px;padding:6px 10px;border-radius:6px;border-left:2px solid var(--border);}
+.lt-segment.es{border-left-color:var(--accent3);}
+.lt-segment.en{border-left-color:var(--info);}
+.lt-segment.both{border-left-color:var(--accent);}
+.lt-seg-lang{font-size:8px;color:var(--text3);letter-spacing:1px;margin-bottom:2px;text-transform:uppercase;}
+.lt-seg-text{color:var(--text);}
+.lt-interim{padding:8px 14px;font-size:11px;color:var(--text3);font-style:italic;border-top:1px solid var(--border);min-height:32px;}
+
+/* File preview */
+.fp{display:none;
 /* File preview */
 .fp{display:none;background:var(--surface);border:1px solid rgba(168,85,247,0.2);border-radius:8px;padding:10px 14px;margin-bottom:10px;align-items:center;gap:10px;}
 .fp.active{display:flex;}
@@ -448,25 +479,47 @@ textarea::placeholder{color:var(--text3);}
 
       <!-- VOICE -->
       <div id="mVoice" style="display:none">
-        <div class="slbl">PERSONAS</div>
+        <div class="slbl">PERSONAS EN LA REUNIÓN</div>
         <div class="p-list" id="personsList"></div>
         <div class="p-add-row">
           <input type="text" class="padd" id="personInput" placeholder="Agregar persona..." onkeydown="if(event.key==='Enter')addPerson()" />
           <button class="padd-btn" onclick="addPerson()">+</button>
         </div>
-        <div class="slbl">GRABAR</div>
-        <div class="rec-row">
-          <button class="rec-btn" id="recordBtn" onclick="toggleRecord()">🎙️</button>
-          <div class="rec-info">
-            <div class="rec-time" id="recTime">00:00</div>
-            <div class="rec-status" id="recStatus">Presiona para grabar</div>
+
+        <!-- MEETING MODE RECORDER -->
+        <div class="meeting-recorder" id="meetingRecorder">
+          <div class="mr-header">
+            <div class="mr-title">🎙️ MODO REUNIÓN</div>
+            <div class="mr-lang-toggle">
+              <button class="lang-btn active" id="langES" onclick="setLang('es')">🇨🇴 ES</button>
+              <button class="lang-btn" id="langEN" onclick="setLang('en')">🇺🇸 EN</button>
+              <button class="lang-btn" id="langBOTH" onclick="setLang('both')">🌐 AMBOS</button>
+            </div>
           </div>
-          <div class="wvfm" id="waveform">
-            <div class="wb" style="height:5px"></div><div class="wb" style="height:10px"></div>
-            <div class="wb" style="height:7px"></div><div class="wb" style="height:14px"></div>
-            <div class="wb" style="height:5px"></div><div class="wb" style="height:18px"></div>
-            <div class="wb" style="height:9px"></div><div class="wb" style="height:12px"></div>
+          <div class="mr-status-row">
+            <div class="mr-time" id="recTime">00:00</div>
+            <div class="mr-status" id="recStatus">Listo para grabar</div>
+            <div class="wvfm" id="waveform">
+              <div class="wb" style="height:5px"></div><div class="wb" style="height:10px"></div>
+              <div class="wb" style="height:7px"></div><div class="wb" style="height:14px"></div>
+              <div class="wb" style="height:5px"></div><div class="wb" style="height:18px"></div>
+              <div class="wb" style="height:9px"></div><div class="wb" style="height:12px"></div>
+            </div>
           </div>
+          <button class="rec-btn-full" id="recordBtn" onclick="toggleRecord()">
+            <span id="recBtnIcon">🎙️</span>
+            <span id="recBtnText">INICIAR GRABACIÓN</span>
+          </button>
+        </div>
+
+        <!-- LIVE TRANSCRIPT -->
+        <div class="live-transcript" id="liveTranscript" style="display:none">
+          <div class="lt-header">
+            <div class="lt-title">📝 TRANSCRIPCIÓN EN VIVO</div>
+            <div class="lt-langs" id="ltLangs"></div>
+          </div>
+          <div class="lt-body" id="ltBody"></div>
+          <div class="lt-interim" id="ltInterim"></div>
         </div>
       </div>
 
@@ -1117,9 +1170,19 @@ function removeFile(){
   document.getElementById('fileInput').value='';
 }
 
-// Recording with Web Speech API
-let recognition=null, recTimer=null, recSecs=0, waveInt=null, isRecording=false;
-let fullTranscript='';
+// ── MEETING MODE - Web Speech API ────────────────────────────────────────────
+let recES=null, recEN=null;
+let recTimer=null, recSecs=0, waveInt=null, isRecording=false;
+let segments=[];
+let currentLang='both';
+let interimES='', interimEN='';
+
+function setLang(lang){
+  currentLang=lang;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  const id='lang'+lang.charAt(0).toUpperCase()+lang.slice(1);
+  if(document.getElementById(id)) document.getElementById(id).classList.add('active');
+}
 
 function toggleRecord(){
   if(isRecording) stopRecord();
@@ -1127,78 +1190,78 @@ function toggleRecord(){
 }
 
 function startRecord(){
-  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SpeechRecognition){
-    showErr('Tu navegador no soporta reconocimiento de voz. Usa Chrome.');
-    return;
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ showErr('Usa Google Chrome para reconocimiento de voz.'); return; }
+  segments=[]; interimES=''; interimEN='';
+  document.getElementById('liveTranscript').style.display='block';
+  document.getElementById('ltBody').innerHTML='';
+  document.getElementById('ltInterim').textContent='Escuchando...';
+  const langMap={es:'<span class="lt-lang-tag lt-lang-es">ES</span>',en:'<span class="lt-lang-tag lt-lang-en">EN</span>',both:'<span class="lt-lang-tag lt-lang-es">ES</span><span class="lt-lang-tag lt-lang-en">EN</span>'};
+  document.getElementById('ltLangs').innerHTML=langMap[currentLang]||langMap.both;
+
+  function makeRec(lang){
+    const r=new SR();
+    r.continuous=true; r.interimResults=true;
+    r.lang=lang==='es'?'es-CO':'en-US';
+    r.onresult=e=>{
+      let interim='',final='';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        if(e.results[i].isFinal) final+=e.results[i][0].transcript+' ';
+        else interim+=e.results[i][0].transcript;
+      }
+      if(final.trim()){
+        const seg={lang,text:final.trim(),time:new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})};
+        segments.push(seg);
+        const body=document.getElementById('ltBody');
+        const div=document.createElement('div');
+        div.className='lt-segment '+lang;
+        div.innerHTML='<div class="lt-seg-lang">'+(lang==='es'?'🇨🇴 ES':'🇺🇸 EN')+' · '+seg.time+'</div><div class="lt-seg-text">'+escHtml(seg.text)+'</div>';
+        body.appendChild(div);
+        body.scrollTop=body.scrollHeight;
+        if(lang==='es') interimES=''; else interimEN='';
+      }
+      if(lang==='es') interimES=interim; else interimEN=interim;
+      const parts=[];
+      if(interimES) parts.push('🇨🇴 '+interimES);
+      if(interimEN) parts.push('🇺🇸 '+interimEN);
+      document.getElementById('ltInterim').textContent=parts.join(' | ')||'Escuchando...';
+    };
+    r.onerror=e=>{ if(e.error==='not-allowed'){showErr('Permiso de micrófono denegado.');stopRecord();} };
+    r.onend=()=>{ if(isRecording) setTimeout(()=>{try{r.start();}catch(e){}},200); };
+    try{r.start();}catch(e){showErr('Error iniciando micrófono.');}
+    return r;
   }
-  fullTranscript='';
-  recognition=new SpeechRecognition();
-  recognition.continuous=true;
-  recognition.interimResults=true;
-  recognition.lang='es-CO'; // Spanish Colombia, also catches English
 
-  recognition.onresult=e=>{
-    let interim='', final='';
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      if(e.results[i].isFinal) final+=e.results[i][0].transcript+' ';
-      else interim+=e.results[i][0].transcript;
-    }
-    fullTranscript+=final;
-    // Show live transcript
-    document.getElementById('transcriptTxt').textContent=(fullTranscript+interim).trim();
-    document.getElementById('transcriptBox').classList.add('active');
-  };
-
-  recognition.onerror=e=>{
-    if(e.error!=='no-speech') showErr(`Error de micrófono: ${e.error}`);
-  };
-
-  recognition.onend=()=>{
-    if(isRecording){
-      // Auto-restart if still recording (browser cuts off after ~60s)
-      try{ recognition.start(); }catch(e){}
-    }
-  };
-
-  recognition.start();
-  isRecording=true;
-  recSecs=0;
-
+  if(currentLang==='es'||currentLang==='both') recES=makeRec('es');
+  if(currentLang==='en'||currentLang==='both') recEN=makeRec('en');
+  isRecording=true; recSecs=0;
   document.getElementById('recordBtn').classList.add('recording');
-  document.getElementById('recordBtn').textContent='⏹️';
-  document.getElementById('recStatus').textContent='Escuchando... habla ahora';
-
-  recTimer=setInterval(()=>{
-    recSecs++;
-    const m=String(Math.floor(recSecs/60)).padStart(2,'0'),s=String(recSecs%60).padStart(2,'0');
-    document.getElementById('recTime').textContent=`${m}:${s}`;
-  },1000);
-
-  waveInt=setInterval(()=>{
-    document.querySelectorAll('.wb').forEach(b=>{b.style.height=(Math.random()*18+4)+'px';});
-  },100);
+  document.getElementById('recBtnIcon').textContent='⏹️';
+  document.getElementById('recBtnText').textContent='DETENER GRABACIÓN';
+  document.getElementById('recStatus').textContent='Escuchando en tiempo real...';
+  recTimer=setInterval(()=>{recSecs++;const m=String(Math.floor(recSecs/60)).padStart(2,'0'),s=String(recSecs%60).padStart(2,'0');document.getElementById('recTime').textContent=m+':'+s;},1000);
+  waveInt=setInterval(()=>{document.querySelectorAll('.wb').forEach(b=>{b.style.height=(Math.random()*18+4)+'px';});},100);
 }
 
 function stopRecord(){
   isRecording=false;
-  if(recognition){ try{recognition.stop();}catch(e){} }
+  if(recES){try{recES.stop();}catch(e){}} recES=null;
+  if(recEN){try{recEN.stop();}catch(e){}} recEN=null;
   clearInterval(recTimer); clearInterval(waveInt);
   [5,10,7,14,5,18,9,12].forEach((h,i)=>{const b=document.querySelectorAll('.wb')[i];if(b)b.style.height=h+'px';});
   document.getElementById('recordBtn').classList.remove('recording');
-  document.getElementById('recordBtn').textContent='🎙️';
-
-  if(fullTranscript.trim()){
-    document.getElementById('recStatus').textContent='✓ Listo para analizar';
-    // Show analyze button
+  document.getElementById('recBtnIcon').textContent='🎙️';
+  document.getElementById('recBtnText').textContent='INICIAR GRABACIÓN';
+  const fullText=segments.map(s=>'['+s.lang.toUpperCase()+'] '+s.text).join('
+');
+  if(fullText.trim()){
+    document.getElementById('recStatus').textContent='✓ '+segments.length+' segmentos — listo para analizar';
+    document.getElementById('ltInterim').textContent='✓ Grabación completa';
     const btn=document.getElementById('fileAnalyzeBtn');
-    btn.style.display='flex';
-    btn.textContent='⚡ ANALIZAR TRANSCRIPCIÓN';
-    btn.onclick=analyzeVoiceTranscript;
-    // Store transcript for analysis
-    window._voiceTranscript=fullTranscript.trim();
+    btn.style.display='flex'; btn.textContent='⚡ ANALIZAR REUNIÓN'; btn.onclick=analyzeVoiceTranscript;
+    window._voiceTranscript=fullText; window._voiceSegments=segments;
   } else {
-    document.getElementById('recStatus').textContent='Sin audio detectado — intenta de nuevo';
+    document.getElementById('recStatus').textContent='Sin audio — intenta de nuevo';
   }
 }
 
@@ -1206,44 +1269,34 @@ async function analyzeVoiceTranscript(){
   const key=document.getElementById('apiKey').value.trim()||localStorage.getItem('sb_key');
   const text=window._voiceTranscript;
   if(!key){showErr('Ingresa tu API Key de Anthropic');return;}
-  if(!text){showErr('No hay transcripción para analizar');return;}
+  if(!text){showErr('No hay transcripción');return;}
   hideErr();
-  setLoad(true,'ANALIZANDO VOZ','Procesando transcripción con contexto CrossPay...');
+  setLoad(true,'ANALIZANDO REUNIÓN','Identificando compromisos, decisiones y personas...');
   document.getElementById('fileAnalyzeBtn').disabled=true;
   document.getElementById('emptyState').style.display='none';
   document.getElementById('resultsArea').classList.remove('active');
   document.getElementById('kanbanSuggest').classList.remove('active');
   try{
-    const r=await callClaude(key,[{type:'text',text:`TRANSCRIPCIÓN DE VOZ:
-${text}`}],'text');
-    r.transcript=text;
-    lastAnalysis=r;
-    renderAnalysis(r);
-    saveToMemory(r,'audio');
-    showKanbanSuggest(r);
-  }catch(e){showErr(`Error: ${e.message}`);}
+    const memCtx=buildMemoryContext();
+    const persStr=persons.join(', ');
+    const prompt=memCtx+'
+
+Personas en la reunión: '+persStr+'
+
+Transcripción bilingüe de reunión (ES/EN):
+
+'+text+'
+
+Analiza esta reunión ejecutiva de CrossPay. JSON:
+{"summary":"resumen ejecutivo estratégico","commitments":[{"text":"compromiso","owner":"persona","deadline":"fecha o Sin fecha","urgent":false}],"decisions":[{"text":"decisión"}],"people":[{"name":"nombre","role":"rol","tasks":["tarea"],"tone":"urgente|normal|informativo"}],"risks":[{"text":"riesgo"}],"dates":[{"text":"fecha","context":"contexto"}],"tasks_by_person":[{"person":"nombre","tasks":["tarea"],"tone":"urgente|normal|informativo"}]}';
+    const r=await callClaude(key,[{type:'text',text:prompt}],'text');
+    r.transcript=text; lastAnalysis=r;
+    renderAnalysis(r); saveToMemory(r,'audio'); showKanbanSuggest(r);
+  }catch(e){showErr('Error: '+e.message);}
   finally{setLoad(false);document.getElementById('fileAnalyzeBtn').disabled=false;}
 }
 
-// ── ANALYZE ───────────────────────────────────────────────────────────────────
-let lastAnalysis=null;
-async function analyzeText(){
-  const key=document.getElementById('apiKey').value.trim()||localStorage.getItem('sb_key');
-  const text=document.getElementById('inputText').value.trim();
-  if(!key){showErr('Ingresa tu API Key de Anthropic');return;}
-  if(!text||text.length<10){showErr('Ingresa texto para analizar');return;}
-  hideErr();setLoad(true,'ANALIZANDO','Procesando con contexto CrossPay...');
-  document.getElementById('analyzeBtn').disabled=true;
-  document.getElementById('emptyState').style.display='none';
-  document.getElementById('resultsArea').classList.remove('active');
-  document.getElementById('kanbanSuggest').classList.remove('active');
-  try{
-    const r=await callClaude(key,[{type:'text',text}],'text');
-    lastAnalysis=r;renderAnalysis(r);saveToMemory(r,'text');
-    showKanbanSuggest(r);
-  }catch(e){showErr(`Error: ${e.message}`);document.getElementById('emptyState').style.display='block';}
-  finally{setLoad(false);document.getElementById('analyzeBtn').disabled=false;}
-}
+
 async function analyzeFile(){
   const key=document.getElementById('apiKey').value.trim()||localStorage.getItem('sb_key');
   if(!currentBlob){showErr('Sube un archivo primero');return;}
