@@ -1117,39 +1117,112 @@ function removeFile(){
   document.getElementById('fileInput').value='';
 }
 
-// Recording
-let mediaRecorder=null,recChunks=[],recTimer=null,recSecs=0,waveInt=null;
-async function toggleRecord(){
-  if(mediaRecorder&&mediaRecorder.state==='recording')stopRecord();
+// Recording with Web Speech API
+let recognition=null, recTimer=null, recSecs=0, waveInt=null, isRecording=false;
+let fullTranscript='';
+
+function toggleRecord(){
+  if(isRecording) stopRecord();
   else startRecord();
 }
-async function startRecord(){
-  try{
-    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-    recChunks=[];
-    mediaRecorder=new MediaRecorder(stream);
-    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)recChunks.push(e.data);};
-    mediaRecorder.onstop=()=>{
-      const blob=new Blob(recChunks,{type:'audio/webm'});
-      stream.getTracks().forEach(t=>t.stop());
-      handleFile(new File([blob],`grabacion-${Date.now()}.webm`,{type:'audio/webm'}));
-    };
-    mediaRecorder.start(100);
-    recSecs=0;
-    document.getElementById('recordBtn').classList.add('recording');
-    document.getElementById('recordBtn').textContent='⏹️';
-    document.getElementById('recStatus').textContent='Grabando...';
-    recTimer=setInterval(()=>{recSecs++;const m=String(Math.floor(recSecs/60)).padStart(2,'0'),s=String(recSecs%60).padStart(2,'0');document.getElementById('recTime').textContent=`${m}:${s}`;},1000);
-    waveInt=setInterval(()=>{document.querySelectorAll('.wb').forEach(b=>{b.style.height=(Math.random()*18+4)+'px';});},100);
-  }catch(e){showErr('Sin acceso al micrófono.');}
+
+function startRecord(){
+  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SpeechRecognition){
+    showErr('Tu navegador no soporta reconocimiento de voz. Usa Chrome.');
+    return;
+  }
+  fullTranscript='';
+  recognition=new SpeechRecognition();
+  recognition.continuous=true;
+  recognition.interimResults=true;
+  recognition.lang='es-CO'; // Spanish Colombia, also catches English
+
+  recognition.onresult=e=>{
+    let interim='', final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal) final+=e.results[i][0].transcript+' ';
+      else interim+=e.results[i][0].transcript;
+    }
+    fullTranscript+=final;
+    // Show live transcript
+    document.getElementById('transcriptTxt').textContent=(fullTranscript+interim).trim();
+    document.getElementById('transcriptBox').classList.add('active');
+  };
+
+  recognition.onerror=e=>{
+    if(e.error!=='no-speech') showErr(`Error de micrófono: ${e.error}`);
+  };
+
+  recognition.onend=()=>{
+    if(isRecording){
+      // Auto-restart if still recording (browser cuts off after ~60s)
+      try{ recognition.start(); }catch(e){}
+    }
+  };
+
+  recognition.start();
+  isRecording=true;
+  recSecs=0;
+
+  document.getElementById('recordBtn').classList.add('recording');
+  document.getElementById('recordBtn').textContent='⏹️';
+  document.getElementById('recStatus').textContent='Escuchando... habla ahora';
+
+  recTimer=setInterval(()=>{
+    recSecs++;
+    const m=String(Math.floor(recSecs/60)).padStart(2,'0'),s=String(recSecs%60).padStart(2,'0');
+    document.getElementById('recTime').textContent=`${m}:${s}`;
+  },1000);
+
+  waveInt=setInterval(()=>{
+    document.querySelectorAll('.wb').forEach(b=>{b.style.height=(Math.random()*18+4)+'px';});
+  },100);
 }
+
 function stopRecord(){
-  if(mediaRecorder)mediaRecorder.stop();
-  clearInterval(recTimer);clearInterval(waveInt);
+  isRecording=false;
+  if(recognition){ try{recognition.stop();}catch(e){} }
+  clearInterval(recTimer); clearInterval(waveInt);
   [5,10,7,14,5,18,9,12].forEach((h,i)=>{const b=document.querySelectorAll('.wb')[i];if(b)b.style.height=h+'px';});
   document.getElementById('recordBtn').classList.remove('recording');
   document.getElementById('recordBtn').textContent='🎙️';
-  document.getElementById('recStatus').textContent='Grabación lista';
+
+  if(fullTranscript.trim()){
+    document.getElementById('recStatus').textContent='✓ Listo para analizar';
+    // Show analyze button
+    const btn=document.getElementById('fileAnalyzeBtn');
+    btn.style.display='flex';
+    btn.textContent='⚡ ANALIZAR TRANSCRIPCIÓN';
+    btn.onclick=analyzeVoiceTranscript;
+    // Store transcript for analysis
+    window._voiceTranscript=fullTranscript.trim();
+  } else {
+    document.getElementById('recStatus').textContent='Sin audio detectado — intenta de nuevo';
+  }
+}
+
+async function analyzeVoiceTranscript(){
+  const key=document.getElementById('apiKey').value.trim()||localStorage.getItem('sb_key');
+  const text=window._voiceTranscript;
+  if(!key){showErr('Ingresa tu API Key de Anthropic');return;}
+  if(!text){showErr('No hay transcripción para analizar');return;}
+  hideErr();
+  setLoad(true,'ANALIZANDO VOZ','Procesando transcripción con contexto CrossPay...');
+  document.getElementById('fileAnalyzeBtn').disabled=true;
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('resultsArea').classList.remove('active');
+  document.getElementById('kanbanSuggest').classList.remove('active');
+  try{
+    const r=await callClaude(key,[{type:'text',text:`TRANSCRIPCIÓN DE VOZ:
+${text}`}],'text');
+    r.transcript=text;
+    lastAnalysis=r;
+    renderAnalysis(r);
+    saveToMemory(r,'audio');
+    showKanbanSuggest(r);
+  }catch(e){showErr(`Error: ${e.message}`);}
+  finally{setLoad(false);document.getElementById('fileAnalyzeBtn').disabled=false;}
 }
 
 // ── ANALYZE ───────────────────────────────────────────────────────────────────
@@ -1190,7 +1263,18 @@ async function analyzeFile(){
     for(let i=0;i<u8.length;i+=chunk)bin+=String.fromCharCode(...u8.subarray(i,Math.min(i+chunk,u8.length)));
     const b64=btoa(bin);
     const mime=currentBlob.type||(type==='audio'?'audio/webm':type==='image'?'image/jpeg':'application/pdf');
-    const mediaBlock=type==='image'?{type:'image',source:{type:'base64',media_type:mime,data:b64}}:{type:'document',source:{type:'base64',media_type:mime,data:b64}};
+    let mediaBlock;
+    if(type==='image'){
+      mediaBlock={type:'image',source:{type:'base64',media_type:mime,data:b64}};
+    } else if(type==='audio'){
+      showErr('Para audio usa el botón REC o graba directamente. Los archivos de audio se procesan con reconocimiento de voz del navegador.');
+      setLoad(false);
+      document.getElementById('fileAnalyzeBtn').disabled=false;
+      return;
+    } else {
+      const docMime=mime.includes('pdf')?'application/pdf':'text/plain';
+      mediaBlock={type:'document',source:{type:'base64',media_type:docMime,data:b64}};
+    }
     const r=await callClaude(key,[mediaBlock],type);
     lastAnalysis=r;
     if(r.transcript){document.getElementById('transcriptTxt').textContent=r.transcript;document.getElementById('transcriptBox').classList.add('active');}
@@ -1205,6 +1289,41 @@ function showKanbanSuggest(r){
     document.getElementById('suggestCount').textContent=count;
     document.getElementById('kanbanSuggest').classList.add('active');
   }
+}
+
+async function callClaudeAudio(key,b64,mime){
+  const sys=`Eres SuperBrain, el cerebro ejecutivo de CrossPay Solutions. Transcribe este audio completamente y luego analiza el contenido. Responde ÚNICAMENTE con JSON válido.`;
+  const persStr=persons.join(', ');
+  const memCtx=buildMemoryContext();
+  const prompt=`${memCtx}
+Personas a identificar: ${persStr}
+
+Este es un audio en base64 (${mime}). Transcríbelo y analízalo.
+
+JSON:
+{
+"transcript":"transcripción completa",
+"summary":"resumen ejecutivo 2-3 oraciones",
+"commitments":[{"text":"compromiso","owner":"persona","deadline":"fecha o Sin fecha","urgent":false}],
+"decisions":[{"text":"decisión"}],
+"people":[{"name":"nombre","role":"rol","tasks":["tarea"],"tone":"urgente|normal|informativo"}],
+"risks":[{"text":"riesgo"}],
+"dates":[{"text":"fecha","context":"contexto"}],
+"tasks_by_person":[{"person":"nombre","tasks":["tarea"],"tone":"urgente|normal|informativo"}]
+}
+
+AUDIO BASE64:
+${b64.substring(0,500)}...(audio truncado para análisis)
+
+Nota: No puedo procesar audio directamente. Indica en el transcript que el audio fue grabado pero no puede ser transcrito automáticamente sin una API de speech-to-text. Proporciona un análisis basado en el contexto disponible.`;
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:sys,messages:[{role:'user',content:prompt}]})
+  });
+  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`Error ${res.status}`);}
+  const d=await res.json();
+  return JSON.parse(d.content[0].text.trim().replace(/```json|```/g,'').trim());
 }
 
 async function callClaude(key,contentBlocks,type){
